@@ -68,8 +68,7 @@ def init_hanabi(num_players):
     return game
 
 def init_players(index, num_players):
-    player = {"index":index, "know":[["??"]*5]*num_players}
-    return player
+    return {"index":index, "know":[["??"]*5]*num_players}
 
 def play_hanabi(num_players, strategy = None):
     game = init_hanabi(num_players)
@@ -84,4 +83,5 @@ def play_hanabi(num_players, strategy = None):
             action_on_players(player)
         if is_game_finished(game):
             break
+        turn = (turn + 1) % num_players
     return game_status(game)
