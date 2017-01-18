@@ -51,18 +51,17 @@ lint: ## check style with flake8
 	flake8 hanabi_simulator tests
 
 test: ## run tests quickly with the default Python
-	py.test
-	
+	py.test tests
+
 
 test-all: ## run tests on every Python version with tox
 	tox
 
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source hanabi_simulator -m pytest
-	
-		coverage report -m
-		coverage html
-		$(BROWSER) htmlcov/index.html
+	coverage report -m
+	coverage html
+	$(BROWSER) htmlcov/index.html
 
 docs: ## generate Sphinx HTML documentation, including API docs
 	rm -f docs/hanabi_simulator.rst
