@@ -4,6 +4,13 @@ import random
 MAX_BLUE_STONE = 9
 COLOR = "RGYBW"
 CARD_VALUE = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
+CARD_IN_HANDS = 5
+START_GAME = {"firework": [[], [], [], [], []],
+              "nb_blue_stone": 9,
+              "nb_red_stone": 3,
+              "draw": [x + str(y) for x in COLOR for y in CARD_VALUE],
+              "discard": []
+}
 
 
 def reveal_on_game(game):
@@ -62,23 +69,23 @@ def play_card_on_player(playing_player, listening_player, card_index):
 def strategy_random(player, game):
     pass
 
+def draw(game, player, num_card = 1):
+    for i in range(num_card):
+        game["hands"][player].append(game["draw"].pop())
 
 def init_hanabi(num_players):
     """play a game of hanabi"""
-    draw = [x + str(y) for x in COLOR for y in CARD_VALUE]
-    random.shuffle(draw)
-    game = {"firework": [[], [], [], [], []],
-            "nb_blue_stone": 9,
-            "nb_red_stone": 3,
-            "hands": [draw[i:i + 5] for i in range(num_players)],
-            "draw": draw[num_players * 5:],
-            "discard": []
-            }
+    import copy
+    game = copy.deepcopy(START_GAME)
+    random.shuffle(game["draw"])
+    game["hands"] = [[] for i in range(num_players)]
+    for i in range(num_players):
+        draw(game, i, num_card = CARD_IN_HANDS)
     return game
 
 
 def init_players(index, num_players):
-    return {"index": index, "know": [["??"] * 5] * num_players}
+    return {"index": index, "know": [["??"] * CARD_IN_HANDS] * num_players}
 
 
 def play_hanabi(num_players, strategy=None):
