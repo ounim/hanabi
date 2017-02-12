@@ -24,31 +24,36 @@ def init_game():
 def test_init():
     """Test that the initialisation of the game is good
     """
-    game = hs.init_hanabi(4)
-    assert(len(game["draw"]) == 30)
-    assert(game["draw"] != hs.START_GAME["draw"])
-    assert(len(game["hands"]) == 4)
-    assert(len(game["discard"]) == 0)
-    for i in game["hands"]:
+    game = hs.Game(4)
+    assert(len(game.draw) == 30)
+    assert(len(game.hands) == 4)
+    assert(len(game.discard) == 0)
+    for i in game.hands:
         assert(len(i) == hs.CARD_IN_HANDS)
     
 def test_action_on_game():
     """Test the different possible action on the game"""
-    game = hs.init_hanabi(4)
-    assert(game["nb_blue_stone"] == 9)
-    hs.discard_on_game(game,0,0)
-    assert(len(game["draw"]) == 29)
-    assert(len(game["discard"]) == 1)
+    game = hs.Game(4)
+    assert(game.nb_blue_stone == 9)
+    game.discard_card(0,0)
+    assert(len(game.draw) == 29)
+    assert(len(game.discard) == 1)
     #nb of blue stone cannot exceed 9
-    assert(game["nb_blue_stone"] == 9)
-    hs.reveal_on_game(game)
-    assert(len(game["draw"]) == 29)
-    assert(game["nb_blue_stone"] == 8)
+    assert(game.nb_blue_stone == 9)
+    game.reveal()
+    assert(len(game.draw) == 29)
+    assert(game.nb_blue_stone == 8)
     for i in range(8):
-        hs.reveal_on_game(game)
+        game.reveal()
     try:
-       hs.reveal_on_game(game)
+       game.reveal()
        assert(False)
     except hs.InvalidActionError:
         pass
 
+    #draw all the card
+    for i in range(29):
+        game.discard_card(0,0)
+    
+    game.discard_card(0,0)
+    assert(game.hands[0][0] == hs.NO_CARD)

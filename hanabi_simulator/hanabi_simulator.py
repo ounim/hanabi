@@ -7,40 +7,65 @@ CARD_VALUE = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
 CARD_IN_HANDS = 5
 MAX_BLUE_STONE = 9
 MAX_RED_STONE = 3
-START_GAME = {"firework": [[], [], [], [], []],
-              "nb_blue_stone": MAX_BLUE_STONE,
-              "nb_red_stone": MAX_RED_STONE,
-              "draw": [x + str(y) for x in COLOR for y in CARD_VALUE],
-              "discard": []
-}
+NO_CARD = "NC"
 
 class InvalidActionError(Exception):
     def __init__(self, message):
         self.message = message
 
-def reveal_on_game(game):
-    if game["nb_blue_stone"] == 0:
-        raise InvalidActionError("Cannot reveal, no blue stone left")
-    game["nb_blue_stone"] = game["nb_blue_stone"] - 1
+class GameOverError(Exception):
+    def __init__(self, message):
+        self.message = message
 
+class Game(object):
+    def __init__(self, num_players):
+        """play a game of hanabi"""
+        self.num_players = num_players
+        self.firework =  [[], [], [], [], []]
+        self.nb_blue_stone =  MAX_BLUE_STONE
+        self.nb_red_stone =  MAX_RED_STONE
+        self.draw =  [x + str(y) for x in COLOR for y in CARD_VALUE]
+        random.shuffle(self.draw)
+        self.discard =  []
+        self.hands = [[] for i in range(num_players)]
+        for i in range(self.num_players):
+            for j in range(CARD_IN_HANDS):
+                self.hands[i].append(self.draw_card())
 
-def discard_on_game(game, player, card_index):
-    game["discard"].append(game["hands"][player][card_index])
-    game["nb_blue_stone"] = min(game["nb_blue_stone"] + 1, MAX_BLUE_STONE)
-    game["hands"][player][card_index] = game["draw"].pop()
+    def draw_card(self):
+        """ At the end of the game, the hand of a player can have less than
+        CARD_IN_HANDS cards. In order, not to mess up the indexes of
+        the cards in the players minds, a special NO_CARD is drawn and
+        put in the hands of the player. """
+        if self.draw:
+            return self.draw.pop()
+        else:
+            return NO_CARD
 
+    def reveal(self):
+        """ give information to a player only remove a blue stone on the game """
+        if self.nb_blue_stone == 0:
+            raise InvalidActionError("Cannot reveal, no blue stone left")
+        self.nb_blue_stone = self.nb_blue_stone - 1
+        
+    def discard_card(self, player_index, card_index):
+        """ discard the card in player_index hand at card_index position """
+        self.discard.append(self.hands[player_index][card_index])
+        self.nb_blue_stone = min(self.nb_blue_stone + 1, MAX_BLUE_STONE)
+        self.hands[player_index][card_index] = self.draw_card()
 
-def play_card_on_game(game, player, card_index):
-    i = COLOR.index(card[0])
-    if len(game["firework"][i]) == int(card[1]) - 1:
-        game["firework"][i].append(card)
-    else:
-        game["nb_red_stone"] = game["nb_red_stone"] - 1
-        if game["nb_red_stone"] < 0:
-            raise "Game over, too many errors"
-    game["hands"][player][card_index] = game["draw"].pop()
-
-
+    def play_card(self, player_index, card_index):
+        card = self.hands[player_index][card_index]
+        color_index = COLOR.index(card[0])
+        if len(self.firework[color_index]) == int(card[1]) - 1:
+            #the color and the number match, add the card
+            self.firework[color_index].append(card)
+        else:
+            #error, the card cannot be played, remove a red_stone
+            if self.nb_red_stone ==  0:
+                raise GameOverError("The card " + card + " cannot be played and there is no red stone anymore")
+            game["nb_red_stone"] = game["nb_red_stone"] - 1
+        self.hands[player_index][card_index] = self.draw_card()
 def merge(know, information):
     result = []
     for i in range(len(know)):
@@ -73,20 +98,6 @@ def play_card_on_player(listening_player, playing_player, card_index):
 
 def strategy_random(player, game):
     pass
-
-def draw(game, player, num_card = 1):
-    for i in range(num_card):
-        game["hands"][player].append(game["draw"].pop())
-
-def init_hanabi(num_players):
-    """play a game of hanabi"""
-    import copy
-    game = copy.deepcopy(START_GAME)
-    random.shuffle(game["draw"])
-    game["hands"] = [[] for i in range(num_players)]
-    for i in range(num_players):
-        draw(game, i, num_card = CARD_IN_HANDS)
-    return game
 
 
 def init_players(index, num_players):
