@@ -3,3 +3,5 @@
 __author__ = """Damien Profeta"""
 __email__ = 'damien@ounim.fr'
 __version__ = '0.1.0'
+
+from .hanabi_simulator import *

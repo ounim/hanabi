@@ -5,9 +5,11 @@ MAX_BLUE_STONE = 9
 COLOR = "RGYBW"
 CARD_VALUE = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
 CARD_IN_HANDS = 5
+MAX_BLUE_STONE = 9
+MAX_RED_STONE = 3
 START_GAME = {"firework": [[], [], [], [], []],
-              "nb_blue_stone": 9,
-              "nb_red_stone": 3,
+              "nb_blue_stone": MAX_BLUE_STONE,
+              "nb_red_stone": MAX_RED_STONE,
               "draw": [x + str(y) for x in COLOR for y in CARD_VALUE],
               "discard": []
 }
@@ -19,13 +21,13 @@ def reveal_on_game(game):
         raise "Invalid action, not enough blue stone"
 
 
-def discard_on_game(player, card_index, game):
+def discard_on_game(game, player, card_index):
     game["discard"].append(game["hands"][player][card_index])
-    game["nb_blue_stone"] = game["nb_blue_stone"] + 1
+    game["nb_blue_stone"] = min(game["nb_blue_stone"] + 1, MAX_BLUE_STONE)
     game["hands"][player][card_index] = game["draw"].pop()
 
 
-def play_card_on_game(player, card_index, game):
+def play_card_on_game(game, player, card_index):
     i = COLOR.index(card[0])
     if len(game["firework"][i]) == int(card[1]) - 1:
         game["firework"][i].append(card)
@@ -53,16 +55,16 @@ def merge(know, information):
     return result
 
 
-def reveal_on_player(revealed_player, listening_player, information):
-    know = listening_player["know"][revealed_player["index"]]
+def reveal_on_player(listening_player, playing_player, information):
+    know = listening_player["know"][playing_player["index"]]
     know = merge(know, information)
 
 
-def discard_on_player(playing_player, listening_player, card_index):
+def draw_on_player(listening_player, playing_player, card_index):
     listening_player["know"][playing_player["index"]][card_index] = "??"
 
 
-def play_card_on_player(playing_player, listening_player, card_index):
+def play_card_on_player(listening_player, playing_player, card_index):
     listening_player["know"][playing_player["index"]][card_index] = "??"
 
 
@@ -85,6 +87,7 @@ def init_hanabi(num_players):
 
 
 def init_players(index, num_players):
+    """ at start everybody knows nothing"""
     return {"index": index, "know": [["??"] * CARD_IN_HANDS] * num_players}
 
 

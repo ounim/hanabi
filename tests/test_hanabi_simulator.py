@@ -11,7 +11,7 @@ Tests for `hanabi_simulator` module.
 import pytest
 
 
-from hanabi_simulator import hanabi_simulator
+import hanabi_simulator as hs
 
 
 @pytest.fixture
@@ -22,12 +22,21 @@ def init_game():
 
 
 def test_init():
-    """Sample pytest test function with the pytest fixture as an argument.
+    """Test that the initialisation of the game is good
     """
-    game = hanabi_simulator.init_hanabi(4)
+    game = hs.init_hanabi(4)
     assert(len(game["draw"]) == 30)
-    assert(game["draw"] != hanabi_simulator.START_GAME["draw"])
+    assert(game["draw"] != hs.START_GAME["draw"])
     assert(len(game["hands"]) == 4)
     for i in game["hands"]:
-        assert(len(i) == hanabi_simulator.CARD_IN_HANDS)
+        assert(len(i) == hs.CARD_IN_HANDS)
     
+def test_action_on_game():
+    """Test the different possible action on the game"""
+    game = hs.init_hanabi(4)
+    assert(game["nb_blue_stone"] == 9)
+    hs.discard_on_game(game,0,0)
+    #nb of blue stone cannot exceed 9
+    assert(game["nb_blue_stone"] == 9)
+    hs.reveal_on_game(game)
+    assert(game["nb_blue_stone"] == 8)
