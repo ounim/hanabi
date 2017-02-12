@@ -14,11 +14,14 @@ START_GAME = {"firework": [[], [], [], [], []],
               "discard": []
 }
 
+class InvalidActionError(Exception):
+    def __init__(self, message):
+        self.message = message
 
 def reveal_on_game(game):
+    if game["nb_blue_stone"] == 0:
+        raise InvalidActionError("Cannot reveal, no blue stone left")
     game["nb_blue_stone"] = game["nb_blue_stone"] - 1
-    if game["nb_blue_stone"] < 0:
-        raise "Invalid action, not enough blue stone"
 
 
 def discard_on_game(game, player, card_index):
