@@ -24,10 +24,16 @@ class Game(object):
         self.firework =  [[], [], [], [], []]
         self.nb_blue_stone =  MAX_BLUE_STONE
         self.nb_red_stone =  MAX_RED_STONE
-        self.draw =  [x + str(y) for x in COLOR for y in CARD_VALUE]
+        self.fill_draw()
         random.shuffle(self.draw)
         self.discard =  []
-        self.hands = [[] for i in range(num_players)]
+        self.draw_initial_hands();
+
+    def fill_draw(self):
+        self.draw =  [x + str(y) for x in COLOR for y in CARD_VALUE]
+
+    def draw_initial_hands(self):
+        self.hands = [[] for i in range(self.num_players)]
         for i in range(self.num_players):
             for j in range(CARD_IN_HANDS):
                 self.hands[i].append(self.draw_card())
@@ -53,6 +59,7 @@ class Game(object):
         self.discard.append(self.hands[player_index][card_index])
         self.nb_blue_stone = min(self.nb_blue_stone + 1, MAX_BLUE_STONE)
         self.hands[player_index][card_index] = self.draw_card()
+        return self.hands[player_index][card_index]
 
     def play_card(self, player_index, card_index):
         card = self.hands[player_index][card_index]
@@ -60,12 +67,17 @@ class Game(object):
         if len(self.firework[color_index]) == int(card[1]) - 1:
             #the color and the number match, add the card
             self.firework[color_index].append(card)
+            #if we complete the firework for a color, we get an extra blue stone
+            if len(self.firework[color_index]) == 5:
+                self.nb_blue_stone = min(self.nb_blue_stone + 1, MAX_BLUE_STONE)
         else:
             #error, the card cannot be played, remove a red_stone
             if self.nb_red_stone ==  0:
                 raise GameOverError("The card " + card + " cannot be played and there is no red stone anymore")
-            game["nb_red_stone"] = game["nb_red_stone"] - 1
+            self.nb_red_stone = self.nb_red_stone - 1
         self.hands[player_index][card_index] = self.draw_card()
+        return self.hands[player_index][card_index]
+
 def merge(know, information):
     result = []
     for i in range(len(know)):
@@ -82,20 +94,38 @@ def merge(know, information):
         result.append(''.join(r))
     return result
 
+class Player(object):
+    def __init__(self, game, index):
+        self.know = ["??"] * CARD_IN_HANDS
+        self.game = game
+        self.players = []
+        self.index = index
 
-def reveal_on_player(listening_player, playing_player, information):
-    know = listening_player["know"][playing_player["index"]]
-    know = merge(know, information)
+    def add_player(self, player):
+        self.players.append(player)
 
+    def play(self):
+        pass
+    
+    def inform(self, information):
+        self.know = merge(self.know, information)
+        
+    def reveal(self, listening_player, information):
+        self.game.reveal()
+        listering_player.inform(information)
 
-def draw_on_player(listening_player, playing_player, card_index):
-    listening_player["know"][playing_player["index"]][card_index] = "??"
+    def play_card(self, card_index):
+        if self.game.play_card(self.index, card_index) == NO_CARD:
+            self.know[card_index] = NO_CARD
+        else:
+            self.know[card_index] = "??"
 
-
-def play_card_on_player(listening_player, playing_player, card_index):
-    listening_player["know"][playing_player["index"]][card_index] = "??"
-
-
+    def discard_card(self, card_index):
+        if self.game.discard_card(self.index, card_index) == NO_CARD:
+            self.know[card_index] = NO_CARD
+        else:
+            self.know[card_index] = "??"
+        
 def strategy_random(player, game):
     pass
 
@@ -106,7 +136,7 @@ def init_players(index, num_players):
 
 
 def play_hanabi(num_players, strategy=None):
-    game = init_hanabi(num_players)
+    game = Game(num_players)
     print(game)
     players = [init_players(i, num_players) for i in range(num_players)]
     turn = 0

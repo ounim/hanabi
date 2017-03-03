@@ -57,3 +57,57 @@ def test_action_on_game():
     
     game.discard_card(0,0)
     assert(game.hands[0][0] == hs.NO_CARD)
+
+def test_firework_on_game():
+    """test firework fill when the right card is played"""
+    game = hs.Game(4)
+    game.draw = [x + str(y) for x in hs.COLOR for y in hs.CARD_VALUE]
+    game.draw.reverse()
+    game.draw_initial_hands()
+
+    assert(game.hands[0][0] == "R1")
+    game.play_card(0,0)
+    assert(game.hands[0][0] == "Y1")
+    assert(game.firework[0] == ["R1"])
+    assert(game.hands[2][0] == "G1")
+    game.play_card(2,0)
+    assert(game.hands[2][0] == "Y1")
+    assert(game.firework[0] == ["R1"])
+    assert(game.firework[1] == ["G1"])
+
+    assert(game.hands[0][3] == "R2")
+    game.play_card(0,3)
+    assert(game.hands[0][3] == "Y1")
+    assert(game.firework[0] == ["R1","R2"])
+
+def test_error_on_game():
+    """test error when the wrong card is played"""
+    game = hs.Game(4)
+    game.draw = [x + str(y) for x in hs.COLOR for y in hs.CARD_VALUE]
+    game.draw.reverse()
+    game.draw_initial_hands()
+    assert(game.hands[0][4] == "R2")
+    game.play_card(0,4)
+    assert(game.nb_red_stone == 2)
+    game.play_card(1,2)
+    game.play_card(1,3)
+    try:
+        game.play_card(1,4)
+        assert(False)
+    except hs.GameOverError:
+        pass
+
+def test_extra_blue_stone_on_game():
+    """test extra blue stone when a firework finish"""
+    game = hs.Game(4)
+    game.draw = [x + str(y) for x in hs.COLOR for y in hs.CARD_VALUE]
+    game.draw.reverse()
+    game.draw_initial_hands()
+    game.reveal()
+    assert(game.nb_blue_stone == 8)
+    game.play_card(0,0)
+    game.play_card(0,3)
+    game.play_card(1,0)
+    game.play_card(1,2)
+    game.play_card(1,4)
+    assert(game.nb_blue_stone == 9)
