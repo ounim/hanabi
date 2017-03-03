@@ -5,7 +5,7 @@ MAX_BLUE_STONE = 9
 COLOR = "RGYBW"
 CARD_VALUE = [1, 1, 1, 2, 2, 3, 3, 4, 4, 5]
 CARD_IN_HANDS = 5
-MAX_BLUE_STONE = 9
+MAX_BLUE_STONE = 8
 MAX_RED_STONE = 3
 NO_CARD = "NC"
 
@@ -64,7 +64,7 @@ class Game(object):
     def play_card(self, player_index, card_index):
         card = self.hands[player_index][card_index]
         color_index = COLOR.index(card[0])
-        if len(self.firework[color_index]) == int(card[1]) - 1:
+        if self.is_card_playable(card):
             #the color and the number match, add the card
             self.firework[color_index].append(card)
             #if we complete the firework for a color, we get an extra blue stone
@@ -78,8 +78,24 @@ class Game(object):
         self.hands[player_index][card_index] = self.draw_card()
         return self.hands[player_index][card_index]
 
+    def is_card_playable(self, card):
+        color_index = COLOR.index(card[0])
+        return len(self.firework[color_index]) == int(card[1]) - 1
+
+    def is_card_in_other_hands(self, own_hand_index, card):
+        for i,hand in enumerate(self.hands):
+            if i == own_hand_index:
+                continue
+            if card in hand:
+                return True
+        return False
+   
+    def score(self):
+        return sum(len(i) for i in self.firework)
+   
 def merge(know, information):
     result = []
+    return know
     for i in range(len(know)):
         a = know[i]
         b = information[i]
@@ -95,24 +111,25 @@ def merge(know, information):
     return result
 
 class Player(object):
-    def __init__(self, game, index):
+    def __init__(self, game, index, strategy):
         self.know = ["??"] * CARD_IN_HANDS
         self.game = game
         self.players = []
         self.index = index
+        self.strategy = strategy
 
     def add_player(self, player):
         self.players.append(player)
 
     def play(self):
-        pass
+        self.strategy(self)
     
     def inform(self, information):
         self.know = merge(self.know, information)
         
     def reveal(self, listening_player, information):
         self.game.reveal()
-        listering_player.inform(information)
+        listening_player.inform(information)
 
     def play_card(self, card_index):
         if self.game.play_card(self.index, card_index) == NO_CARD:
@@ -125,28 +142,48 @@ class Player(object):
             self.know[card_index] = NO_CARD
         else:
             self.know[card_index] = "??"
-        
-def strategy_random(player, game):
-    pass
 
-
-def init_players(index, num_players):
-    """ at start everybody knows nothing"""
-    return {"index": index, "know": [["??"] * CARD_IN_HANDS] * num_players}
-
-
+class Strategy(object):
+    def __call__(self, player):
+        game = player.game
+        hand = game.hands[player.index]
+        for i, card in enumerate(hand):
+            if game.is_card_playable(card):
+                print "play " + card
+                player.play_card(i)
+                return
+        for i, card in enumerate(hand):
+            if card in game.draw or game.is_card_in_other_hands(player.index, card):
+                print "discard " + card
+                player.discard_card(i)
+                return
+        print "reveal "
+        player.reveal(player.players[0],"R1")
+      
+      
 def play_hanabi(num_players, strategy=None):
     game = Game(num_players)
     print(game)
-    players = [init_players(i, num_players) for i in range(num_players)]
+    players = [Player(game, i, strategy) for i in range(num_players)]
+    for player1 in players:
+        for player2 in players:
+            if player1.index == player2.index:
+                continue
+            player1.add_player(player2)
     turn = 0
-    while game["draw"]:
+    while game.draw:
         player = players[turn]
-        action_on_game, action_on_players = strategy(player, game)
-        action_on_game(game)
-        for player in players:
-            action_on_players(player)
-        if is_game_finished(game):
-            break
+        player.play()
         turn = (turn + 1) % num_players
-    return game_status(game)
+    #last turn
+    for i in range(num_players):
+        player = players[turn]
+        player.play()
+        turn = (turn + 1) % num_players
+      
+    print game.firework
+    print game.hands
+    print game.score()
+
+if __name__ == "__main__":
+    play_hanabi(4, Strategy())

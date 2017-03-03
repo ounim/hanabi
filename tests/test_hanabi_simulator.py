@@ -34,16 +34,16 @@ def test_init():
 def test_action_on_game():
     """Test the different possible action on the game"""
     game = hs.Game(4)
-    assert(game.nb_blue_stone == 9)
+    assert(game.nb_blue_stone == hs.MAX_BLUE_STONE)
     game.discard_card(0,0)
     assert(len(game.draw) == 29)
     assert(len(game.discard) == 1)
     #nb of blue stone cannot exceed 9
-    assert(game.nb_blue_stone == 9)
+    assert(game.nb_blue_stone == hs.MAX_BLUE_STONE)
     game.reveal()
     assert(len(game.draw) == 29)
-    assert(game.nb_blue_stone == 8)
-    for i in range(8):
+    assert(game.nb_blue_stone == hs.MAX_BLUE_STONE - 1)
+    for i in range(hs.MAX_BLUE_STONE -1):
         game.reveal()
     try:
        game.reveal()
@@ -104,10 +104,23 @@ def test_extra_blue_stone_on_game():
     game.draw.reverse()
     game.draw_initial_hands()
     game.reveal()
-    assert(game.nb_blue_stone == 8)
+    assert(game.nb_blue_stone == hs.MAX_BLUE_STONE - 1)
     game.play_card(0,0)
     game.play_card(0,3)
     game.play_card(1,0)
     game.play_card(1,2)
     game.play_card(1,4)
-    assert(game.nb_blue_stone == 9)
+    assert(game.nb_blue_stone == hs.MAX_BLUE_STONE)
+
+def test_score_on_game():
+    game = hs.Game(4)
+    game.draw = [x + str(y) for x in hs.COLOR for y in hs.CARD_VALUE]
+    game.draw.reverse()
+    game.draw_initial_hands()
+    assert(game.score() == 0)
+    assert(game.hands[0][0] == "R1")
+    game.play_card(0,0)
+    assert(game.hands[0][0] == "Y1")
+    assert(game.score() == 1)
+    game.play_card(0,0)
+    assert(game.score() == 2)
